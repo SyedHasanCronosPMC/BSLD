@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Inter var', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary;
+  }
+}
+
+/* Phone Input Styles */
+.react-tel-input .form-control {
+  @apply w-full bg-dark/50 border-primary/20 text-light;
+}
+
+.react-tel-input .selected-flag {
+  @apply bg-dark/50;
+}
+
+.react-tel-input .country-list {
+  @apply bg-dark border-primary/20;
+}
+
+.react-tel-input .country-list .country {
+  @apply text-light hover:bg-primary/20;
+}
+
+.react-tel-input .country-list .highlight {
+  @apply bg-primary/20;
+}
