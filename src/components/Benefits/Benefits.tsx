@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { FaRobot, FaUsers, FaChartLine, FaLightbulb } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import BenefitCard from './BenefitCard';

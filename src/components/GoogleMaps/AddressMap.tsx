@@ -1,10 +1,13 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { GoogleMap, Marker, StreetViewPanorama } from '@react-google-maps/api';
 import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
 import { FaMapMarkerAlt, FaSearch, FaStreetView, FaBuilding } from 'react-icons/fa';
 
-interface AddressMapProps {
-  onAddressSelect: (address: string, lat: number, lng: number) => void;
+export interface AddressMapProps {
+  addressValue: string;
+  latitude?: number;
+  longitude?: number;
+  onAddressChange: (address: string, lat: number, lng: number) => void;
 }
 
 const mapContainerStyle = {
@@ -18,8 +21,11 @@ const defaultCenter = {
   lng: -74.0060
 };
 
-const AddressMap = ({ onAddressSelect }: AddressMapProps) => {
-  const [selectedLocation, setSelectedLocation] = useState(defaultCenter);
+const AddressMap = ({ addressValue, latitude, longitude, onAddressChange }: AddressMapProps) => {
+  const [selectedLocation, setSelectedLocation] = useState({
+    lat: latitude || defaultCenter.lat,
+    lng: longitude || defaultCenter.lng
+  });
   const [markerVisible, setMarkerVisible] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'street'>('map');
   const [mapType, setMapType] = useState<google.maps.MapTypeId>(google.maps.MapTypeId.ROADMAP);
@@ -34,6 +40,7 @@ const AddressMap = ({ onAddressSelect }: AddressMapProps) => {
   } = usePlacesAutocomplete({
     debounce: 300,
     cache: 24 * 60 * 60,
+    defaultValue: addressValue,
   });
 
   const handleSelect = async (address: string) => {
@@ -45,14 +52,14 @@ const AddressMap = ({ onAddressSelect }: AddressMapProps) => {
       const { lat, lng } = await getLatLng(results[0]);
       setSelectedLocation({ lat, lng });
       setMarkerVisible(true);
-      onAddressSelect(address, lat, lng);
+      onAddressChange(address, lat, lng);
       
       if (mapRef.current) {
         mapRef.current.panTo({ lat, lng });
         mapRef.current.setZoom(16);
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error geocoding address:', error);
     }
   };
 
@@ -72,11 +79,11 @@ const AddressMap = ({ onAddressSelect }: AddressMapProps) => {
         if (status === 'OK' && results?.[0]) {
           const address = results[0].formatted_address;
           setValue(address, false);
-          onAddressSelect(address, lat, lng);
+          onAddressChange(address, lat, lng);
         }
       });
     }
-  }, [onAddressSelect, setValue]);
+  }, [onAddressChange, setValue]);
 
   const toggleViewMode = () => {
     setViewMode(prev => prev === 'map' ? 'street' : 'map');
@@ -86,6 +93,13 @@ const AddressMap = ({ onAddressSelect }: AddressMapProps) => {
     setMapType(prev => prev === google.maps.MapTypeId.ROADMAP ? 
       google.maps.MapTypeId.SATELLITE : google.maps.MapTypeId.ROADMAP);
   };
+
+  useEffect(() => {
+    if (latitude && longitude) {
+      setSelectedLocation({ lat: latitude, lng: longitude });
+      setMarkerVisible(true);
+    }
+  }, [latitude, longitude]);
 
   return (
     <div className="space-y-4">
@@ -186,9 +200,8 @@ const AddressMap = ({ onAddressSelect }: AddressMapProps) => {
           )}
           {viewMode === 'street' && (
             <StreetViewPanorama
-              position={selectedLocation}
-              visible={true}
               options={{
+                position: selectedLocation,
                 enableCloseButton: false,
                 addressControl: false,
               }}

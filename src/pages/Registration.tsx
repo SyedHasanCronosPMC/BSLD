@@ -1,71 +1,116 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { createRegistration } from '../services/registrationService';
-import type { RegistrationData, RegistrationFormData } from '../types/registration';
-import RegistrationTabs from '../components/Registration/RegistrationTabs';
+import { motion } from 'framer-motion';
 import PhotoUpload from '../components/PhotoUpload/PhotoUpload';
 import AddressMap from '../components/GoogleMaps/AddressMap';
+import { registerUser } from '../services/registrationService';
+
+interface FormData {
+  name: string;
+  email: string;
+  photo?: File;
+  address: string;
+  latitude?: number;
+  longitude?: number;
+}
 
 const Registration = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState<RegistrationFormData>({
-    firstName: '',
-    lastName: '',
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
     email: '',
-    phone: '',
-    country: null,
-    linkedinUrl: '',
-    education: '',
-    currentRole: '',
-    experience: null,
-    interests: [],
     address: '',
-    latitude: 0,
-    longitude: 0,
-    photo: undefined
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
-      const registrationData: RegistrationData = {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        country: formData.country?.value || '',
-        linkedin_url: formData.linkedinUrl,
-        education: formData.education,
-        current_role: formData.currentRole,
-        experience: formData.experience?.value || '',
-        interests: formData.interests.map(i => i.value),
-        address: formData.address,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
-        photo_url: formData.photo ? URL.createObjectURL(formData.photo) : undefined
-      };
-
-      await createRegistration(registrationData);
-      
-      // Show success message and redirect
-      alert('Registration successful!');
-      navigate('/');
+      const result = await registerUser(formData);
+      if (result.success) {
+        // Handle successful registration
+        console.log('Registration successful:', result.data);
+      }
     } catch (error) {
       console.error('Registration error:', error);
-      alert('Error during registration. Please try again.');
     }
   };
 
-  // Rest of the component implementation...
+  const handleAddressChange = (address: string, lat: number, lng: number) => {
+    setFormData(prev => ({
+      ...prev,
+      address,
+      latitude: lat,
+      longitude: lng
+    }));
+  };
+
   return (
-    <div className="min-h-screen bg-dark py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        <RegistrationTabs>
-          {/* Your tab content */}
-        </RegistrationTabs>
+    <section className="min-h-screen py-20 bg-dark relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-radial from-primary/10 to-dark/90"></div>
+      
+      <div className="container mx-auto px-4 relative">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-2xl mx-auto"
+        >
+          <h1 className="text-4xl font-bold mb-8 text-gradient text-center">
+            Join BuildSchool
+          </h1>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-light/70 mb-2">Name</label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-4 py-2 bg-dark/50 border border-primary/20 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none text-light"
+                placeholder="Enter your full name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-light/70 mb-2">Email</label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-4 py-2 bg-dark/50 border border-primary/20 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none text-light"
+                placeholder="Enter your email"
+              />
+            </div>
+
+            <div>
+              <label className="block text-light/70 mb-2">Profile Photo</label>
+              <PhotoUpload
+                onPhotoChange={(file) => setFormData({ ...formData, photo: file })}
+                photoFile={formData.photo}
+              />
+            </div>
+
+            <div>
+              <label className="block text-light/70 mb-2">Location</label>
+              <AddressMap
+                addressValue={formData.address}
+                latitude={formData.latitude}
+                longitude={formData.longitude}
+                onAddressChange={handleAddressChange}
+              />
+            </div>
+
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full py-3 bg-gradient-to-r from-primary to-secondary rounded-lg font-semibold text-white shadow-neon hover:shadow-neon-strong transition-all duration-300"
+            >
+              Complete Registration
+            </motion.button>
+          </form>
+        </motion.div>
       </div>
-    </div>
+    </section>
   );
 };
 

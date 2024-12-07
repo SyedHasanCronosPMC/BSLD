@@ -1,15 +1,25 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCloudUploadAlt, FaImage, FaTimes, FaUser } from 'react-icons/fa';
 
 interface PhotoUploadProps {
-  onPhotoSelect: (file: File) => void;
+  onPhotoChange: (file: File) => void;
+  photoFile?: File;
 }
 
-const PhotoUpload = ({ onPhotoSelect }: PhotoUploadProps) => {
+const PhotoUpload = ({ onPhotoChange, photoFile }: PhotoUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+
+  useEffect(() => {
+    if (photoFile) {
+      const url = URL.createObjectURL(photoFile);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [photoFile]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -39,7 +49,7 @@ const PhotoUpload = ({ onPhotoSelect }: PhotoUploadProps) => {
   };
 
   const handleFile = (file: File) => {
-    onPhotoSelect(file);
+    onPhotoChange(file);
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreview(reader.result as string);
@@ -114,11 +124,13 @@ const PhotoUpload = ({ onPhotoSelect }: PhotoUploadProps) => {
           >
             <div className="relative overflow-hidden border border-primary/20 group rounded-2xl" style={{ height: '400px' }}>
               <div className="w-full h-full flex items-center justify-center bg-dark/40">
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="h-full w-auto object-contain"
-                />
+                {photoFile && (
+                  <img 
+                    src={previewUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-dark/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
